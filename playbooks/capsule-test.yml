@@ -1,0 +1,109 @@
+
+  - name: Capsule Sync
+    hosts: satellite
+    become: yes
+    vars_files: satellite.yml    
+    tasks:  
+      - name: Get list of Capsules
+        foreman_search_facts:
+          username: "{{ sat_admin }}"
+          password: "{{ sat_password }}"
+          validate_certs: no
+          server_url: "https://{{ sat_server }}"
+          resource: smart_proxies
+          full_details: true
+        register: capsule_json
+        delegate_to: localhost
+
+      - name: synchronize capsule to specified locations
+        delegate_to: "{{ sat_server }}"
+        ignore_errors: False
+        shell: "hammer capsule content synchronize --name {{ item.0.name }}"
+        loop: "{{ query('subelements', capsule_json.resources, 'locations') }}"
+        loop_control:
+          label: '*'
+        when: 
+          - item.0.name is not search('master') 
+          - "item.1.name in locations"
+
+      # - debug:
+      #     msg: "capsule: {{ item.0.name }} location: {{ item.1.name }}"
+      #   loop: "{{ query('subelements', capsule_json.resources, 'locations') }}"
+      #   loop_control:
+      #     label: '*'
+      #   when: item.0.name is not search('master')
+
+
+
+
+
+
+
+
+
+
+
+
+    # tasks:
+    #   - name: "Read a Setting"
+    #     foreman_search_facts:
+    #       username: "{{ sat_admin }}"
+    #       password: "{{ sat_password }}"
+    #       validate_certs: no
+    #       server_url: "https://{{ sat_server }}"
+    #       resource: smart_proxies
+    #       full_details: true
+    #       search: location = "{{ item }}"
+    #     with_items: "{{ locations }}"
+    #     register: capsule
+    #     delegate_to: localhost
+
+    #   - debug:
+    #       msg: "{{ capsule|dict2items }}"
+    #     #with_items: "{{ capsule['results'] }}"
+      
+ 
+ 
+      # - name: transform
+      #   set_fact:
+      #     capsule_json: "{{ capsule_json | join(',') }}"
+
+      # - debug:
+      #     msg: "capsule: {{ item.0.name }} location: {{ item.1.name }}"
+      #   loop: "{{ lookup('subelements', capsule_json.resources, 'locations') }}"
+      #   loop_control:
+      #     label: '*'
+      #   when: item.0.name is not search('master')
+
+
+
+      # - debug:
+      #     msg: "capsule: {{ item.0.name }} location: {{ item.1.name }}"
+      #   loop: "{{ lookup('subelements', capsule_json.stdout.resources, 'locations') }}"
+      #   loop_control:
+      #     label: '*'
+      #   when: item.0.name is not search('master')
+
+      # - name: debug
+      #   debug:
+      #     msg: "{{ item }}"
+      #   loop: "{{ capsules['resources']['name'] }}"
+      
+
+
+
+
+
+
+
+
+
+
+
+      # - name: synchronize capsule
+      #   delegate_to: "{{ sat_server }}"
+      #   ignore_errors: True
+      #   shell: "hammer capsule content synchronize --name {{ item }}"
+      #   loop: "{{ capsules['resources'][] }}"
+      #   run_once: true
+      #   when: sync_capsules | bool 

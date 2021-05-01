@@ -1,0 +1,73 @@
+---
+  - name: Publish Content Views
+    hosts: localhost
+    gather_facts: False
+    connection: local
+    tasks:
+    # - name: Ensure apypie pip module is installed
+    #   pip:
+    #     virtualenv: /var/lib/awx/venv/ansible
+    #     virtualenv_site_packages: yes
+    #     name:
+    #       - apypie
+    #     extra_args: "--user"
+    #   environment:
+    #     http_proxy: http://10.15.2.10:8080
+    #     https_proxy: https://10.15.2.10:8080
+    #     HTTP_PROXY: http://10.15.2.10:8080
+    #     HTTPS_PROXY: https://10.15.2.10:8080
+    #     no_proxy: example.com,127.0.0.1
+    #     NO_PROXY: example.com,127.0.0.1
+
+        
+        
+# --trusted-host artifactory.apps.mgt.example.com -i https://artifactory.apps.mgt.example.com/artifactory/api/pypi/pypi-remote/simple -f https://{{ sat_admin }}:{{ sat_password }}@artifactory.apps.mgt.example.com/artifactory/api/pypi/pypi-remote/simple
+#      no_log: True
+
+    - name:  "Publish a content view and promote that version CV"
+      katello_content_view_version:
+        username: "{{ sat_admin }}"
+        password: "{{ sat_password }}"
+        server_url: https://sat6-master-02.mgt.example.com
+        force_promote: yes
+        force_yum_metadata_regeneration: yes
+        content_view: CV_ANSIBLE
+        validate_certs: false
+        organization: DHS
+        lifecycle_environments: PRD
+      # loop: "{{ cv_list }}"
+      # run_once: true
+      # when: content_publish | bool
+
+    - name: Publish a content view and promote that version CCV
+      katello_content_view_version:
+        username: "{{ sat_admin }}"
+        password: "{{ sat_password }}"
+        server_url: https://{{ sat_server }}
+        force_promote: yes
+        force_yum_metadata_regeneration: yes
+        content_view: "{{ item }}"
+        validate_certs: false
+        organization: "{{ org }}"
+        lifecycle_environments: "{{ locations }}"
+      loop: "{{ ccv_list }}"
+      run_once: true
+      when: content_publish | bool
+  
+  - name: Sync Capsules
+    hosts: satellite
+    gather_facts: False
+    become: true
+    tasks:
+      - name: Sync Capsules
+        block:
+          - name: Get list of Capsules
+            shell: /usr/bin/hammer capsule list --search "location = {{ locations }}" | awk '{print $3}' | grep -v master | tail -2
+            register: capsule_list
+
+          - name: synchronize capsule to specified locations
+            shell: /usr/bin/hammer  capsule content synchronize --name "{{ item }}"
+            with_items: "{{ capsule_list.stdout }}"
+            tags:  sync_capsules
+        when: sync_capsules | bool
+    

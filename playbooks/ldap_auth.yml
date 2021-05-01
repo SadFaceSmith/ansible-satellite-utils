@@ -1,0 +1,67 @@
+---
+  - name: Publish Content Views
+    hosts: localhost
+    connection: local
+    gather_facts: False
+    become: yes
+    vars_files: satellite.yml
+    vars_prompt:
+    - name: sat_admin
+      prompt: "Enter Satellite Admin Username"
+      private: no
+    - name: sat_password
+      prompt: "Enter Satellite Admin Password"
+      private: yes
+    tasks:
+      - name: Create LDAP Auth
+        foreman_auth_source_ldap:
+          validate_certs: false
+          tls: true      
+          name: "Sat_Admin_LDAP"
+          host: "{{ idm_server }}"
+          port: 636
+          locations:
+            - ECICD
+            - PFTE
+            - DEV
+            - SBX
+            - TST
+            - STG
+            - PRD
+          organizations:
+            - "{{ org }}"
+          onthefly_register: True
+          account: "{{ dn }}"
+          account_password: "{{ idm_password }}"
+          base_dn: "{{ base_dn }}"
+          groups_base: "{{ groups_base_dn }}"
+          usergroup_sync: true
+          server_type: free_ipa
+          attr_login: uid
+          attr_firstname: givenName
+          attr_lastname: sn
+          attr_mail: mail
+          attr_photo: jpegPhoto
+          server_url: "https://{{ sat_server }}"
+          username: "{{ sat_admin }}"
+          password: "{{ sat_password }}"
+          state: present
+      - name: Create admin user group
+        foreman_usergroup:
+          validate_certs: false
+          name: sat_admins
+          admin: yes
+          state: present
+          server_url: "https://{{ sat_server }}"
+          username: "{{ sat_admin }}"
+          password: "{{ sat_password }}"
+      - name: Create an external user group
+        foreman_external_usergroup:
+          name: sat_admins
+          auth_source_ldap: "Sat_Admin_LDAP"
+          usergroup: "sat_admins"
+          state: present
+          username: "{{ sat_admin }}"
+          password: "{{ sat_password }}"
+          server_url: "https://{{ sat_server }}"
+          validate_certs: false

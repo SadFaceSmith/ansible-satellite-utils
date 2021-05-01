@@ -1,0 +1,30 @@
+---
+  - name: Publish Content Views
+    hosts: localhost
+    connection: local
+    gather_facts: False
+    become: yes
+    vars_files: satellite.yml
+    vars_prompt:
+    - name: sat_admin
+      prompt: "Enter Satellite Admin Username"
+      private: no
+    - name: sat_password
+      prompt: "Enter Satellite Admin Password"
+      private: yes
+    tasks:
+    - pip:
+        extra_args: --user
+        name:
+          - apypie
+          - PyYAML
+    - name:  "Publish a content view and promote that version"
+      katello_content_view:
+        username: "{{ sat_admin }}"
+        password: "{{ sat_password }}"
+        server_url: https://{{ sat_server }}
+        name: "{{ item }}"
+        auto_publish: yes
+        validate_certs: false
+        organization: "{{ org }}"
+      with_items: "{{ ccv_list }}"

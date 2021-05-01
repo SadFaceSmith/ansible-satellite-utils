@@ -1,0 +1,14 @@
+---
+  - name: upload manifest
+    hosts: localhost
+    connection: local
+    tasks:
+      - name: "Upload the RHEL developer edition manifest"
+        katello_manifest:
+          username: "etsmith"
+          password: "1qazxsw2!QAZXSW@"
+          server_url: "https://sat6-master-01.sbx.example.com"
+          validate_certs: no
+          organization: "DHS"
+          state: present
+          manifest_path: "/home/etsmith/Downloads/manifest_Sat6_DSO_20200331T170137Z.zip"
