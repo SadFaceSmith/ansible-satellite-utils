@@ -6,7 +6,7 @@
       - name: "Upload the RHEL developer edition manifest"
         katello_manifest:
           username: "etsmith"
-          password: "1qazxsw2!QAZXSW@"
+          password: "changeme"
           server_url: "https://sat6-master-01.sbx.example.com"
           validate_certs: no
           organization: "DHS"

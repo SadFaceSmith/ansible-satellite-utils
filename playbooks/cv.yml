@@ -6,7 +6,7 @@
       - name: Get all existing activation keys for organization ACME
         resource_info:
           username: 'etsmith'
-          password: '1qazxsw2!QAZXSW@'
+          password: 'changeme'
           server_url: "https://sat6-master-02.mgt.example.com"
           resource: content_views
           organization: DHS
